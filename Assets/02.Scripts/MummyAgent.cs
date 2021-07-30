@@ -18,6 +18,12 @@ public class MummyAgent : Agent
     private Transform tr;
     private Transform targetTr;
 
+    public Material gootMt;
+    public Material badMt;
+    private Material originMt;
+
+    private Renderer floorRd;
+
     // 초기화 메소드
     public override void Initialize()
     {
@@ -68,5 +74,21 @@ public class MummyAgent : Agent
         var action = actionsOut.ContinuousActions;
         action[0] = Input.GetAxis("Vertical");
         action[1] = Input.GetAxis("Horizontal");
+    }
+
+    // 보상 처리 로직
+    void OnCollisionEnter(Collision coll)
+    {
+        if (coll.collider.CompareTag("DEAD_ZONE"))
+        {
+            SetReward(-1.0f);
+            EndEpisode();   // 학습 종료
+        }
+
+        if (coll.collider.CompareTag("TARGET"))
+        {
+            SetReward(+1.0f);
+            EndEpisode();
+        }
     }
 }
