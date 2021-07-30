@@ -47,11 +47,37 @@ public class MummyRayAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        
+        var action = actions.DiscreteActions;
+        Debug.Log($"[0] = {action[0]}, [1] = {action[1]}");
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        
+        var actions = actionsOut.DiscreteActions;   // 이산 (-1.0, 0.0, +1.0)
+
+        // Clear를 해줬기 때문에 키코드가 들어가지 않은 0상태는 0에 할당
+        actions.Clear();
+
+        // Branch 0 - 이동
+        // 정지/전진/후진 Non/W/S (0,1,2) : Branch 0의 Size 3
+        if (Input.GetKey(KeyCode.W))
+        {
+            actions[0] = 1;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            actions[0] = 2;
+        }
+
+        // Branch 1 - 회전
+        // 정지/좌회전/우회전 Non/A/D (0,1,2) : Branch 1의 Size 3
+        if (Input.GetKey(KeyCode.A))
+        {
+            actions[1] = 1;
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            actions[1] = 2;
+        }
     }
 }
