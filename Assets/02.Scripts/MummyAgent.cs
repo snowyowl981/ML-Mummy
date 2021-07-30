@@ -18,7 +18,7 @@ public class MummyAgent : Agent
     private Transform tr;
     private Transform targetTr;
 
-    public Material gootMt;
+    public Material goodMt;
     public Material badMt;
     private Material originMt;
 
@@ -30,6 +30,8 @@ public class MummyAgent : Agent
         rb = GetComponent<Rigidbody>();
         tr = GetComponent<Transform>();
         targetTr = tr.parent.Find("Target").GetComponent<Transform>();
+        floorRd = tr.parent.Find("Floor")?.GetComponent<Renderer>();
+        originMt = floorRd.material;
     }
 
     // 에피소드(학습의 단위)가 시작될때마다 호출되는 메소드
@@ -44,6 +46,14 @@ public class MummyAgent : Agent
 
         // 타겟의 위치 변경
         targetTr.localPosition = new Vector3(Random.Range(-4.0f, 4.0f), 0.55f, Random.Range(-4.0f, 4.0f));
+
+        StartCoroutine(RevertMaterialCoroutine());
+    }
+
+    IEnumerator RevertMaterialCoroutine()
+    {
+        yield return new WaitForSeconds(0.2f);
+        floorRd.material = originMt;
     }
 
     // 주변 환경을 관측하는 콜백 메소드
@@ -62,7 +72,7 @@ public class MummyAgent : Agent
         // [0] Up, Down
         // [1] Left, Right
         Vector3 dir = (Vector3.forward * action[0]) + (Vector3.right * action[1]);
-        rb.AddForce(dir.normalized * 50.0f, ForceMode.VelocityChange);
+        rb.AddForce(dir.normalized * 50.0f);
 
         // 마이너스 패널티
         SetReward(-0.001f);
@@ -81,12 +91,16 @@ public class MummyAgent : Agent
     {
         if (coll.collider.CompareTag("DEAD_ZONE"))
         {
+            floorRd.material = badMt;
+
             SetReward(-1.0f);
             EndEpisode();   // 학습 종료
         }
 
         if (coll.collider.CompareTag("TARGET"))
         {
+            floorRd.material = goodMt;
+            
             SetReward(+1.0f);
             EndEpisode();
         }
