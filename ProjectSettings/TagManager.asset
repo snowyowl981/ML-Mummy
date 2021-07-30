@@ -37,6 +37,9 @@ TagManager:
   - plus
   - DEAD_ZONE
   - TARGET
+  - BAD_ITEM
+  - GOOD_ITEM
+  - WALL
   layers:
   - Default
   - TransparentFX
