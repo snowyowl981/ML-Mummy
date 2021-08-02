@@ -40,6 +40,14 @@ TagManager:
   - BAD_ITEM
   - GOOD_ITEM
   - WALL
+  - BLACK
+  - BLUE
+  - GREEN
+  - RED
+  - HINT_BLACK
+  - HINT_BLUE
+  - HINT_GREEN
+  - HINT_RED
   layers:
   - Default
   - TransparentFX

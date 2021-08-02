@@ -9,9 +9,14 @@ public class MummyRayAgent : Agent
 {
     private Transform tr;
     private Rigidbody rb;
+    private StageManager stageManager;
 
     public float moveSpeed = 1.5f;
     public float turnSpeed = 200.0f;
+
+    private Renderer floorRd;
+    public Material goodMt, badMt;
+    private Material originMt;
 
     public override void Initialize()
     {
@@ -22,11 +27,23 @@ public class MummyRayAgent : Agent
 
         tr = GetComponent<Transform>();
         rb = GetComponent<Rigidbody>();
+        stageManager = tr.parent.GetComponent<StageManager>();
+        floorRd = tr.parent.Find("Floor").GetComponent<MeshRenderer>();
+        originMt = floorRd.material;
+    }
+
+    // 아이템에 맞는 색으로 변경했다가 다시 원본색으로 환원
+    IEnumerator RevertMaterialCoroutine(Material changeMt)
+    {
+        floorRd.material = changeMt;
+        yield return new WaitForSeconds(0.2f);
+        floorRd.material = originMt;
     }
 
     public override void OnEpisodeBegin()
     {
         // 스테이지 초기화
+        stageManager.SetStageObject();
 
         // 물리엔진 초기화
         rb.velocity = rb.angularVelocity = Vector3.zero;
@@ -49,6 +66,38 @@ public class MummyRayAgent : Agent
     {
         var action = actions.DiscreteActions;
         Debug.Log($"[0] = {action[0]}, [1] = {action[1]}");
+
+        Vector3 dir = Vector3.zero;
+        Vector3 rot = Vector3.zero;
+
+        // Branch 0 정지/전진/후진
+        switch (action[0])
+        {
+            case 0: dir = Vector3.zero;
+                break;
+
+            case 1: dir = tr.forward; 
+                break;
+
+            case 2: dir = -tr.forward; 
+                break;
+        }
+
+        // Branch 1 좌/우 회전
+        switch (action[1])
+        {
+            case 1: rot = -tr.up;
+                break;
+
+            case 2: rot = tr.up;
+                break;
+        }
+
+        tr.Rotate(rot, Time.fixedDeltaTime * turnSpeed);
+        rb.AddForce(dir * moveSpeed, ForceMode.VelocityChange);
+
+        // (제자리에 머물러있을 것에 대비) 마이너스 패널티를 적용
+        AddReward(-1 / (float)MaxStep);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -78,6 +127,34 @@ public class MummyRayAgent : Agent
         if (Input.GetKey(KeyCode.D))
         {
             actions[1] = 2;
+        }
+    }
+
+    void OnCollisionEnter(Collision coll)
+    {
+        if (coll.collider.CompareTag("GOOD_ITEM"))
+        {
+            // 충돌 시 물리력 초기화(GOOD_ITEM을 많이 먹어야 하므로 에피소드 종료는 안함)
+            rb.velocity = rb.angularVelocity = Vector3.zero;
+            Destroy(coll.gameObject);
+            AddReward(+1.0f);
+
+            StartCoroutine(RevertMaterialCoroutine(goodMt));
+        }
+
+        if (coll.collider.CompareTag("BAD_ITEM"))
+        {
+            floorRd.material = badMt;
+
+            AddReward(-1.0f);
+            EndEpisode();
+
+            StartCoroutine(RevertMaterialCoroutine(badMt));
+        }
+
+        if (coll.collider.CompareTag("WALL"))
+        {
+            AddReward(-0.1f);
         }
     }
 }

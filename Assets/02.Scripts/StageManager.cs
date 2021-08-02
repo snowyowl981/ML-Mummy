@@ -13,15 +13,8 @@ public class StageManager : MonoBehaviour
     private List<GameObject> goodList = new List<GameObject>();
     private List<GameObject> badList = new List<GameObject>();
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        SetStageObject();
-    }
-
     public void SetStageObject()
     {
-        
         foreach (var obj in goodList)
         {
             Destroy(obj);
